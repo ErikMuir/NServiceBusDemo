@@ -1,0 +1,58 @@
+{
+  "version": "0.2.0",
+  "compounds": [
+    {
+      "name": "Demo.*",
+      "configurations": [
+        "Demo.Api",
+        "Demo.Workflow",
+        "Demo.Notification",
+        "Demo.Platform"
+      ]
+    }
+  ],
+  "configurations": [
+    {
+      "name": "Demo.Api",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/Demo.Api/bin/Debug/net6.0/Demo.Api.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/Demo.Api",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+http://\\S+:([0-9]+)",
+        "uriFormat": "http://localhost:%s/swagger"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "Demo.Workflow",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/Demo.Workflow/bin/Debug/net6.0/Demo.Workflow.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/Demo.Workflow"
+    },
+    {
+      "name": "Demo.Notification",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/Demo.Notification/bin/Debug/net6.0/Demo.Notification.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/Demo.Notification"
+    },
+    {
+      "name": "Demo.Platform",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/Demo.Platform/bin/Debug/net6.0/Demo.Platform.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/Demo.Platform"
+    }
+  ]
+}
