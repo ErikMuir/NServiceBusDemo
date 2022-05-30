@@ -5,7 +5,7 @@ namespace Demo.Workflow.Sagas;
 public class WorkflowSagaData : ContainSagaData
 {
     public Guid WorkflowId { get; set; }
-    public string CreatedBy { get; set; } = default!;
+    public string UserEmail { get; set; } = default!;
     public DateTime CreatedUtc { get; set; }
     public DateTime CompletedUtc { get; set; }
 

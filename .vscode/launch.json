@@ -2,18 +2,18 @@
   "version": "0.2.0",
   "compounds": [
     {
-      "name": "Demo.*",
+      "name": "Demo",
       "configurations": [
-        "Demo.Api",
-        "Demo.Workflow",
-        "Demo.Notification",
-        "Demo.Platform"
+        "Api",
+        "Workflow",
+        "Notification",
+        "Platform"
       ]
     }
   ],
   "configurations": [
     {
-      "name": "Demo.Api",
+      "name": "Api",
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
@@ -31,7 +31,7 @@
       }
     },
     {
-      "name": "Demo.Workflow",
+      "name": "Workflow",
       "type": "coreclr",
       "request": "launch",
       "program": "${workspaceFolder}/Demo.Workflow/bin/Debug/net6.0/Demo.Workflow.dll",
@@ -39,7 +39,7 @@
       "cwd": "${workspaceFolder}/Demo.Workflow"
     },
     {
-      "name": "Demo.Notification",
+      "name": "Notification",
       "type": "coreclr",
       "request": "launch",
       "program": "${workspaceFolder}/Demo.Notification/bin/Debug/net6.0/Demo.Notification.dll",
@@ -47,7 +47,7 @@
       "cwd": "${workspaceFolder}/Demo.Notification"
     },
     {
-      "name": "Demo.Platform",
+      "name": "Platform",
       "type": "coreclr",
       "request": "launch",
       "program": "${workspaceFolder}/Demo.Platform/bin/Debug/net6.0/Demo.Platform.dll",

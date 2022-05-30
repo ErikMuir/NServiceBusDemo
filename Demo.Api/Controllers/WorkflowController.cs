@@ -1,6 +1,5 @@
 using Demo.Api.Models;
-using Demo.Workflow.Messages.Commands;
-using Demo.Workflow.Messages.Events;
+using Demo.Workflow.Messages;
 using Microsoft.AspNetCore.Mvc;
 using NServiceBus;
 
@@ -23,7 +22,7 @@ public class WorkflowController : ControllerBase
     public async Task<IActionResult> BeginWorkflow([FromBody] BeginWorkflowRequest requestBody)
     {
         var workflowId = Guid.NewGuid();
-        var message = new BeginWorkflow(workflowId, requestBody.RequestedByUser);
+        var message = new BeginWorkflow(workflowId, requestBody.UserEmail);
 
         await _messageSession.Send(message)
             .ConfigureAwait(false);
@@ -31,10 +30,10 @@ public class WorkflowController : ControllerBase
         return Ok(new { workflowId });
     }
 
-    [HttpPost("{workflowId}/questionnaire")]
-    public async Task<IActionResult> Questionnaire(Guid workflowId)
+    [HttpPost("{workflowId}/requisition")]
+    public async Task<IActionResult> RequisitionForm(Guid workflowId)
     {
-        var message = new QuestionnaireSubmitted(workflowId);
+        var message = new RequisitionFormSubmitted(workflowId);
 
         await _messageSession.Publish(message)
             .ConfigureAwait(false);
@@ -45,15 +44,9 @@ public class WorkflowController : ControllerBase
     [HttpPost("{workflowId}/governance")]
     public async Task<IActionResult> Governance(Guid workflowId, [FromBody] GovernanceRequest requestBody)
     {
-        WorkflowEvent message;
-        if (requestBody.IsApproved)
-        {
-            message = new GovernanceApproval(workflowId);
-        }
-        else
-        {
-            message = new GovernanceDenial(workflowId);
-        }
+        IEvent message = requestBody.IsApproved
+            ? new GovernanceApproval(workflowId)
+            : new GovernanceDenial(workflowId);
 
         await _messageSession.Publish(message)
             .ConfigureAwait(false);

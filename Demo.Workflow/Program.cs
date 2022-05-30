@@ -1,8 +1,6 @@
-﻿using Demo.Notification.Messages.Commands;
+﻿using Demo.Notification.Messages;
 using Microsoft.Extensions.Hosting;
 using NServiceBus;
-
-Console.Title = "Demo.Workflow";
 
 var host = Host
     .CreateDefaultBuilder(args)
@@ -13,7 +11,7 @@ var host = Host
         var transport = endpointConfiguration.UseTransport<LearningTransport>();
 
         transport.Routing().RouteToEndpoint(
-            assembly: typeof(SendNotification).Assembly,
+            assembly: typeof(SendEmail).Assembly,
             destination: "Demo.Notification");
 
         endpointConfiguration.UsePersistence<LearningPersistence>();

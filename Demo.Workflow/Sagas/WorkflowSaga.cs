@@ -1,15 +1,15 @@
 using NServiceBus;
 using NServiceBus.Logging;
-using Demo.Workflow.Messages.Commands;
-using Demo.Workflow.Messages.Events;
-using Demo.Workflow.Messages.Timeouts;
+using Demo.Workflow.Messages;
+using Demo.Notification;
+using Demo.Notification.Messages;
 
 namespace Demo.Workflow.Sagas;
 
 public class WorkflowSaga :
     Saga<WorkflowSagaData>,
     IAmStartedByMessages<BeginWorkflow>,
-    IHandleMessages<QuestionnaireSubmitted>,
+    IHandleMessages<RequisitionFormSubmitted>,
     IHandleMessages<GovernanceApproval>,
     IHandleMessages<GovernanceDenial>,
     IHandleMessages<HardwareAllocated>,
@@ -24,7 +24,7 @@ public class WorkflowSaga :
     {
         mapper.MapSaga(saga => saga.WorkflowId)
             .ToMessage<BeginWorkflow>(msg => msg.WorkflowId)
-            .ToMessage<QuestionnaireSubmitted>(msg => msg.WorkflowId)
+            .ToMessage<RequisitionFormSubmitted>(msg => msg.WorkflowId)
             .ToMessage<GovernanceApproval>(msg => msg.WorkflowId)
             .ToMessage<GovernanceDenial>(msg => msg.WorkflowId)
             .ToMessage<HardwareAllocated>(msg => msg.WorkflowId)
@@ -40,22 +40,22 @@ public class WorkflowSaga :
         _log.Info($"Creating workflow with ID {message.WorkflowId}");
 
         // Data.WorkflowId = message.WorkflowId; // this happens auto-magically by the Saga framework
-        Data.CreatedBy = message.User;
+        Data.UserEmail = message.UserEmail;
         Data.CreatedUtc = DateTime.UtcNow;
 
-        var workflowCreated = new WorkflowCreated(message.WorkflowId, message.User);
-        return context.Publish(workflowCreated);
+        var email = GetEmailCommand(NotificationType.WorkflowCreated);
+        return context.Send(email);
     }
 
-    public Task Handle(QuestionnaireSubmitted message, IMessageHandlerContext context)
+    public Task Handle(RequisitionFormSubmitted message, IMessageHandlerContext context)
     {
-        _log.Info($"Questionnaire submitted for workflow {message.WorkflowId}");
+        _log.Info($"Requisition form submitted for workflow {message.WorkflowId}");
 
         Data.IsQuestionnaireSubmitted = true;
         Data.HasGovernanceApproval = null;
 
-        var beginGovernanceReview = new BeginGovernanceReview(message.WorkflowId);
-        return context.SendLocal(beginGovernanceReview);
+        var email = GetEmailCommand(NotificationType.BeginGovernance);
+        return context.Send(email);
     }
 
     public Task Handle(GovernanceDenial message, IMessageHandlerContext context)
@@ -70,8 +70,8 @@ public class WorkflowSaga :
 
         Data.HasGovernanceApproval = false;
 
-        var notifyGovernanceDenial = new NotifyGovernanceDenial(message.WorkflowId, Data.CreatedBy);
-        return context.SendLocal(notifyGovernanceDenial);
+        var email = GetEmailCommand(NotificationType.GovernanceDenied);
+        return context.Send(email);
     }
 
     public Task Handle(GovernanceApproval message, IMessageHandlerContext context)
@@ -86,8 +86,17 @@ public class WorkflowSaga :
 
         Data.HasGovernanceApproval = true;
 
-        var beginEngagementReview = new BeginHardwareAndNetworking(message.WorkflowId);
-        return context.SendLocal(beginEngagementReview);
+        var hardwareEmail = GetEmailCommand(NotificationType.BeginHardware);
+        var hardwareTask = context.Send(hardwareEmail);
+
+        var networkingEmail = GetEmailCommand(NotificationType.BeginHardware);
+        var networkingTask = context.Send(networkingEmail);
+
+        return Task.WhenAll(new Task[]
+        {
+            hardwareTask,
+            networkingTask,
+        });
     }
 
     public Task Handle(HardwareAllocated message, IMessageHandlerContext context)
@@ -139,30 +148,34 @@ public class WorkflowSaga :
         Data.IsDataCenterProcessed = true;
         Data.CompletedUtc = DateTime.UtcNow;
 
-        var workflowComplete = new WorkflowCompleted(message.WorkflowId, Data.CompletedUtc, Data.CreatedBy);
-        return context.Publish(workflowComplete);
+        var email = GetEmailCommand(NotificationType.WorkflowComplete);
+        return context.Send(email);
     }
     #endregion
 
     #region Timeouts
     public Task Timeout(DataCenterSLAWarning timeout, IMessageHandlerContext context)
     {
-        if (!Data.IsDataCenterProcessed)
+        if (Data.IsDataCenterProcessed)
         {
-            _log.Warn($"Alert!! The Data Center's SLA for workflow {timeout.WorkflowId} will expire {timeout.ExpiresUtc}");
+            return Task.CompletedTask;
         }
 
-        return Task.CompletedTask;
+        _log.Warn("Data Center SLA - Warning");
+        var email = GetEmailCommand(NotificationType.DataCenterSLAWarning);
+        return context.Send(email);
     }
 
     public Task Timeout(DataCenterSLAExpired timeout, IMessageHandlerContext context)
     {
-        if (!Data.IsDataCenterProcessed)
+        if (Data.IsDataCenterProcessed)
         {
-            _log.Warn($"Alert!! The Governance team's SLA for workflow {timeout.WorkflowId} expired {timeout.ExpiresUtc}");
+            return Task.CompletedTask;
         }
 
-        return Task.CompletedTask;
+        _log.Warn("Data Center SLA - Expired");
+        var email = GetEmailCommand(NotificationType.DataCenterSLAExpired);
+        return context.Send(email);
     }
     #endregion
 
@@ -175,8 +188,8 @@ public class WorkflowSaga :
         }
 
         // begin data center processing
-        var beginDataCenterProcessing = new BeginDataCenterProcessing(Data.WorkflowId);
-        var beginDataCenterProcessingTask = context.SendLocal(beginDataCenterProcessing);
+        var email = GetEmailCommand(NotificationType.BeginDataCenter);
+        var beginDataCenterProcessingTask = context.Send(email);
 
         // data center SLA prep
         var startUtc = DateTime.UtcNow;
@@ -201,10 +214,34 @@ public class WorkflowSaga :
         // await all tasks
         return Task.WhenAll(new Task[]
         {
-                beginDataCenterProcessingTask,
-                slaWarningTask,
-                slaExpiredTask,
+            beginDataCenterProcessingTask,
+            slaWarningTask,
+            slaExpiredTask,
         });
+    }
+
+    private SendEmail GetEmailCommand(NotificationType type)
+    {
+        var to = type switch
+        {
+            NotificationType.WorkflowCreated => Data.UserEmail,
+            NotificationType.GovernanceDenied => Data.UserEmail,
+            NotificationType.WorkflowComplete => Data.UserEmail,
+            NotificationType.BeginGovernance => "governance@example.com",
+            NotificationType.BeginHardware => "hardware@example.com",
+            NotificationType.BeginNetworking => "networking@example.com",
+            NotificationType.BeginDataCenter => "datacenter@example.com",
+            NotificationType.DataCenterSLAWarning => "datacenter@example.com",
+            NotificationType.DataCenterSLAExpired => "datacenter@example.com",
+            _ => throw new NotSupportedException(),
+        };
+        return new SendEmail
+        {
+            WorkflowId = Data.WorkflowId,
+            Type = type,
+            To = to,
+            Subject = $"{type} - {Data.WorkflowId}",
+        };
     }
     #endregion
 }

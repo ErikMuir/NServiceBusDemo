@@ -1,4 +1,4 @@
-using Demo.Workflow.Messages.Commands;
+using Demo.Workflow.Messages;
 using NServiceBus;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,7 +16,7 @@ builder.Host.UseNServiceBus(context =>
     var transport = endpointConfiguration.UseTransport<LearningTransport>();
 
     transport.Routing().RouteToEndpoint(
-        assembly: typeof(WorkflowCommand).Assembly,
+        assembly: typeof(BeginWorkflow).Assembly,
         destination: "Demo.Workflow");
 
     return endpointConfiguration;

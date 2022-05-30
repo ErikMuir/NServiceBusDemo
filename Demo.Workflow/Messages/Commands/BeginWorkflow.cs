@@ -1,11 +1,11 @@
-namespace Demo.Workflow.Messages.Commands;
+namespace Demo.Workflow.Messages;
 
 public class BeginWorkflow : WorkflowCommand
 {
-    public BeginWorkflow(Guid workflowId, string user) : base(workflowId)
+    public BeginWorkflow(Guid workflowId, string userEmail) : base(workflowId)
     {
-        User = user;
+        UserEmail = userEmail;
     }
 
-    public string User { get; set; }
+    public string UserEmail { get; set; } = default!;
 }

@@ -1,10 +1,10 @@
 using NServiceBus;
 
-namespace Demo.Workflow.Messages.Commands;
+namespace Demo.Workflow.Messages;
 
-public abstract class WorkflowCommand : ICommand, IWorkflowMessage
+public abstract class WorkflowCommand : ICommand
 {
-    protected WorkflowCommand(Guid workflowId)
+    public WorkflowCommand(Guid workflowId)
     {
         WorkflowId = workflowId;
     }

@@ -1,4 +1,4 @@
-namespace Demo.Workflow.Messages.Timeouts;
+namespace Demo.Workflow.Messages;
 
 public class DataCenterSLAWarning : SLATimeout
 {

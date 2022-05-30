@@ -1,4 +1,4 @@
-namespace Demo.Workflow.Messages.Events;
+namespace Demo.Workflow.Messages;
 
 public class DataCenterProcessed : WorkflowEvent
 {

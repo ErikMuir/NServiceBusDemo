@@ -2,10 +2,10 @@ namespace Demo.Api.Models;
 
 public class BeginWorkflowRequest
 {
-    public BeginWorkflowRequest(string requestedByUser)
+    public BeginWorkflowRequest(string userEmail)
     {
-        RequestedByUser = requestedByUser;
+        UserEmail = userEmail;
     }
 
-    public string RequestedByUser { get; set; }
+    public string UserEmail { get; set; }
 }
