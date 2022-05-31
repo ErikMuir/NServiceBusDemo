@@ -2,9 +2,11 @@
 using Microsoft.Extensions.Hosting;
 using NServiceBus;
 
+Console.Title = "Workflow Service";
+
 var host = Host
     .CreateDefaultBuilder(args)
-    .UseNServiceBus(context =>
+    .UseNServiceBus(_ =>
     {
         var endpointConfiguration = new EndpointConfiguration("Demo.Workflow");
 

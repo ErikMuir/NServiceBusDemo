@@ -9,7 +9,7 @@ public class WorkflowSagaData : ContainSagaData
     public DateTime CreatedUtc { get; set; }
     public DateTime CompletedUtc { get; set; }
 
-    public bool IsQuestionnaireSubmitted { get; set; }
+    public bool IsRequisitionFormSubmitted { get; set; }
     public bool? HasGovernanceApproval { get; set; }
     public bool IsHardwareAllocated { get; set; }
     public bool IsNetworkConfigured { get; set; }

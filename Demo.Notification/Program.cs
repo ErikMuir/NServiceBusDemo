@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Hosting;
 using NServiceBus;
 
+Console.Title = "Notification Service";
+
 var host = Host
     .CreateDefaultBuilder(args)
     .UseNServiceBus(context =>

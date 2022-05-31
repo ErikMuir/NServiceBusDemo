@@ -4,10 +4,9 @@
     {
       "name": "Demo",
       "configurations": [
-        "Api",
-        "Workflow",
         "Notification",
-        "Platform"
+        "Workflow",
+        "Api",
       ]
     }
   ],
@@ -21,11 +20,6 @@
       "args": [],
       "cwd": "${workspaceFolder}/Demo.Api",
       "stopAtEntry": false,
-      "serverReadyAction": {
-        "action": "openExternally",
-        "pattern": "\\bNow listening on:\\s+http://\\S+:([0-9]+)",
-        "uriFormat": "http://localhost:%s/swagger"
-      },
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -36,7 +30,8 @@
       "request": "launch",
       "program": "${workspaceFolder}/Demo.Workflow/bin/Debug/net6.0/Demo.Workflow.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/Demo.Workflow"
+      "cwd": "${workspaceFolder}/Demo.Workflow",
+      "console": "externalTerminal"
     },
     {
       "name": "Notification",
@@ -44,15 +39,8 @@
       "request": "launch",
       "program": "${workspaceFolder}/Demo.Notification/bin/Debug/net6.0/Demo.Notification.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/Demo.Notification"
-    },
-    {
-      "name": "Platform",
-      "type": "coreclr",
-      "request": "launch",
-      "program": "${workspaceFolder}/Demo.Platform/bin/Debug/net6.0/Demo.Platform.dll",
-      "args": [],
-      "cwd": "${workspaceFolder}/Demo.Platform"
+      "cwd": "${workspaceFolder}/Demo.Notification",
+      "console": "externalTerminal"
     }
   ]
 }

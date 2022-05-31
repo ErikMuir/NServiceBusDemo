@@ -37,7 +37,7 @@ public class WorkflowSaga :
     #region Handlers
     public Task Handle(BeginWorkflow message, IMessageHandlerContext context)
     {
-        _log.Info($"Creating workflow with ID {message.WorkflowId}");
+        _log.Info($"{message.WorkflowId} - Starting Workflow Saga");
 
         // Data.WorkflowId = message.WorkflowId; // this happens auto-magically by the Saga framework
         Data.UserEmail = message.UserEmail;
@@ -49,9 +49,15 @@ public class WorkflowSaga :
 
     public Task Handle(RequisitionFormSubmitted message, IMessageHandlerContext context)
     {
-        _log.Info($"Requisition form submitted for workflow {message.WorkflowId}");
+        if (Data.IsRequisitionFormSubmitted)
+        {
+            _log.Warn($"{Data.WorkflowId} - Requisition form already submitted");
+            return Task.CompletedTask;
+        }
 
-        Data.IsQuestionnaireSubmitted = true;
+        _log.Info($"{Data.WorkflowId} - Requisition form submitted");
+
+        Data.IsRequisitionFormSubmitted = true;
         Data.HasGovernanceApproval = null;
 
         var email = GetEmailCommand(NotificationType.BeginGovernance);
@@ -60,15 +66,17 @@ public class WorkflowSaga :
 
     public Task Handle(GovernanceDenial message, IMessageHandlerContext context)
     {
-        if (!Data.IsQuestionnaireSubmitted || Data.HasGovernanceApproval.HasValue)
+        if (!Data.IsRequisitionFormSubmitted || Data.HasGovernanceApproval.HasValue)
         {
-            _log.Warn($"Workflow {message.WorkflowId} not yet ready for governance review");
+            _log.Warn($"{Data.WorkflowId} - Waiting for requisition form");
+            // set a timeout to retry later
             return Task.CompletedTask;
         }
 
-        _log.Info($"Governance has denied workflow {message.WorkflowId}");
+        _log.Info($"{Data.WorkflowId} - Governance has denied the request");
 
         Data.HasGovernanceApproval = false;
+        Data.IsRequisitionFormSubmitted = false;
 
         var email = GetEmailCommand(NotificationType.GovernanceDenied);
         return context.Send(email);
@@ -76,20 +84,21 @@ public class WorkflowSaga :
 
     public Task Handle(GovernanceApproval message, IMessageHandlerContext context)
     {
-        if (!Data.IsQuestionnaireSubmitted || Data.HasGovernanceApproval.HasValue)
+        if (!Data.IsRequisitionFormSubmitted || Data.HasGovernanceApproval.HasValue)
         {
-            _log.Warn($"Workflow {message.WorkflowId} not yet ready for governance review");
+            _log.Warn($"{Data.WorkflowId} - Waiting for requisition form");
+            // set a timeout to retry later
             return Task.CompletedTask;
         }
 
-        _log.Info($"Governance has approved workflow {message.WorkflowId}");
+        _log.Info($"{Data.WorkflowId} - Governance has approved the request");
 
         Data.HasGovernanceApproval = true;
 
         var hardwareEmail = GetEmailCommand(NotificationType.BeginHardware);
         var hardwareTask = context.Send(hardwareEmail);
 
-        var networkingEmail = GetEmailCommand(NotificationType.BeginHardware);
+        var networkingEmail = GetEmailCommand(NotificationType.BeginNetworking);
         var networkingTask = context.Send(networkingEmail);
 
         return Task.WhenAll(new Task[]
@@ -103,11 +112,18 @@ public class WorkflowSaga :
     {
         if (Data.HasGovernanceApproval == null || !Data.HasGovernanceApproval.Value)
         {
-            _log.Warn($"Workflow {message.WorkflowId} not yet approved for hardware allocation step");
+            _log.Warn($"{Data.WorkflowId} - Waiting for governance review");
+            // set a timeout to retry later
             return Task.CompletedTask;
         }
 
-        _log.Info($"Hardware has been allocated for workflow {message.WorkflowId}");
+        if (Data.IsHardwareAllocated)
+        {
+            _log.Warn($"{Data.WorkflowId} - Hardware already allocated");
+            return Task.CompletedTask;
+        }
+
+        _log.Info($"{Data.WorkflowId} - Hardware allocated");
 
         Data.IsHardwareAllocated = true;
 
@@ -118,11 +134,18 @@ public class WorkflowSaga :
     {
         if (Data.HasGovernanceApproval == null || !Data.HasGovernanceApproval.Value)
         {
-            _log.Warn($"Workflow {message.WorkflowId} not yet approved for network configuration step");
+            _log.Warn($"{Data.WorkflowId} - Waiting for governance review");
+            // set a timeout to retry later
             return Task.CompletedTask;
         }
 
-        _log.Info($"Network has been configured for workflow {message.WorkflowId}");
+        if (Data.IsNetworkConfigured)
+        {
+            _log.Warn($"{Data.WorkflowId} - Networking already configured");
+            return Task.CompletedTask;
+        }
+
+        _log.Info($"{Data.WorkflowId} - Network configured");
 
         Data.IsNetworkConfigured = true;
 
@@ -133,17 +156,18 @@ public class WorkflowSaga :
     {
         if (!Data.IsHardwareAllocated || !Data.IsNetworkConfigured)
         {
-            _log.Warn($"Workflow {message.WorkflowId} not yet ready for data center processing");
+            _log.Warn($"{Data.WorkflowId} - Waiting for hardware allocation and/or netowrking configuration");
+            // set a timeout to retry later
             return Task.CompletedTask;
         }
 
         if (Data.IsDataCenterProcessed)
         {
-            _log.Warn($"Data center has already been processed for workflow {message.WorkflowId}");
+            _log.Warn($"{Data.WorkflowId} - Data center already processed");
             return Task.CompletedTask;
         }
 
-        _log.Info($"Data Center has been processed for workflow {message.WorkflowId}");
+        _log.Info($"{Data.WorkflowId} - Data Center processed");
 
         Data.IsDataCenterProcessed = true;
         Data.CompletedUtc = DateTime.UtcNow;
@@ -161,7 +185,7 @@ public class WorkflowSaga :
             return Task.CompletedTask;
         }
 
-        _log.Warn("Data Center SLA - Warning");
+        _log.Warn($"{Data.WorkflowId} - WARNING! Data Center SLA about to expire");
         var email = GetEmailCommand(NotificationType.DataCenterSLAWarning);
         return context.Send(email);
     }
@@ -173,7 +197,7 @@ public class WorkflowSaga :
             return Task.CompletedTask;
         }
 
-        _log.Warn("Data Center SLA - Expired");
+        _log.Warn($"{Data.WorkflowId} - ALERT! Data Center SLA has expired");
         var email = GetEmailCommand(NotificationType.DataCenterSLAExpired);
         return context.Send(email);
     }
@@ -193,7 +217,7 @@ public class WorkflowSaga :
 
         // data center SLA prep
         var startUtc = DateTime.UtcNow;
-        var dataCenterSLA = TimeSpan.FromMinutes(2); // would probably come from config
+        var dataCenterSLA = TimeSpan.FromMinutes(1); // would probably come from config
         var timeout = new SLATimeout
         {
             WorkflowId = Data.WorkflowId,
