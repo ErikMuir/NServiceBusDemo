@@ -1,0 +1,184 @@
+{
+	"info": {
+		"_postman_id": "8ffb134f-a4a8-4918-8b93-ce1bbe908b30",
+		"name": "NServiceBus Demo",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1504929"
+	},
+	"item": [
+		{
+			"name": "Begin Workflow",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const { workflowId } = pm.response.json();\r",
+							"pm.collectionVariables.set(\"workflowId\", workflowId);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"userEmail\": \"foobar@example.com\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUri}}/workflow",
+					"host": [
+						"{{baseUri}}"
+					],
+					"path": [
+						"workflow"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Requisition Form",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{baseUri}}/workflow/{{workflowId}}/requisition",
+					"host": [
+						"{{baseUri}}"
+					],
+					"path": [
+						"workflow",
+						"{{workflowId}}",
+						"requisition"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Governanace",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"isApproved\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUri}}/workflow/{{workflowId}}/governance",
+					"host": [
+						"{{baseUri}}"
+					],
+					"path": [
+						"workflow",
+						"{{workflowId}}",
+						"governance"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Hardware",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{baseUri}}/workflow/{{workflowId}}/hardware",
+					"host": [
+						"{{baseUri}}"
+					],
+					"path": [
+						"workflow",
+						"{{workflowId}}",
+						"hardware"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Networking",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{baseUri}}/workflow/{{workflowId}}/networking",
+					"host": [
+						"{{baseUri}}"
+					],
+					"path": [
+						"workflow",
+						"{{workflowId}}",
+						"networking"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Data Center",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{baseUri}}/workflow/{{workflowId}}/data-center",
+					"host": [
+						"{{baseUri}}"
+					],
+					"path": [
+						"workflow",
+						"{{workflowId}}",
+						"data-center"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUri",
+			"value": "http://localhost:5285",
+			"type": "string"
+		},
+		{
+			"key": "workflowId",
+			"value": "placeholder",
+			"type": "string"
+		}
+	]
+}
