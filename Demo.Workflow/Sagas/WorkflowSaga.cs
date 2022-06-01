@@ -172,7 +172,7 @@ public class WorkflowSaga :
         Data.IsDataCenterProcessed = true;
         Data.CompletedUtc = DateTime.UtcNow;
 
-        var email = GetEmailCommand(NotificationType.WorkflowComplete);
+        var email = GetEmailCommand(NotificationType.RequestFulfilled);
         return context.Send(email);
     }
     #endregion
@@ -250,7 +250,7 @@ public class WorkflowSaga :
         {
             NotificationType.WorkflowCreated => Data.UserEmail,
             NotificationType.GovernanceDenied => Data.UserEmail,
-            NotificationType.WorkflowComplete => Data.UserEmail,
+            NotificationType.RequestFulfilled => Data.UserEmail,
             NotificationType.BeginGovernance => "governance@example.com",
             NotificationType.BeginHardware => "hardware@example.com",
             NotificationType.BeginNetworking => "networking@example.com",

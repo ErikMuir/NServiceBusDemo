@@ -4,9 +4,9 @@
     {
       "name": "Demo",
       "configurations": [
-        "Notification",
-        "Workflow",
         "Api",
+        "Workflow",
+        "Notification",
       ]
     }
   ],
@@ -19,7 +19,7 @@
       "program": "${workspaceFolder}/Demo.Api/bin/Debug/net6.0/Demo.Api.dll",
       "args": [],
       "cwd": "${workspaceFolder}/Demo.Api",
-      "stopAtEntry": false,
+      "console": "externalTerminal",
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -28,6 +28,7 @@
       "name": "Workflow",
       "type": "coreclr",
       "request": "launch",
+      "preLaunchTask": "build",
       "program": "${workspaceFolder}/Demo.Workflow/bin/Debug/net6.0/Demo.Workflow.dll",
       "args": [],
       "cwd": "${workspaceFolder}/Demo.Workflow",
@@ -37,6 +38,7 @@
       "name": "Notification",
       "type": "coreclr",
       "request": "launch",
+      "preLaunchTask": "build",
       "program": "${workspaceFolder}/Demo.Notification/bin/Debug/net6.0/Demo.Notification.dll",
       "args": [],
       "cwd": "${workspaceFolder}/Demo.Notification",

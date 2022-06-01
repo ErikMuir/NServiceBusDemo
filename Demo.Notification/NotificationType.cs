@@ -10,5 +10,5 @@ public enum NotificationType
     BeginDataCenter,
     DataCenterSLAWarning,
     DataCenterSLAExpired,
-    WorkflowComplete,
+    RequestFulfilled,
 }

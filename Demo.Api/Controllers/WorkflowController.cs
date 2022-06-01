@@ -24,6 +24,8 @@ public class WorkflowController : ControllerBase
         var workflowId = Guid.NewGuid();
         var message = new BeginWorkflow(workflowId, requestBody.UserEmail);
 
+        _logger.LogInformation($"{workflowId} - Sending BeginWorkflow command to Workflow service");
+
         await _messageSession.Send(message)
             .ConfigureAwait(false);
 
@@ -34,6 +36,8 @@ public class WorkflowController : ControllerBase
     public async Task<IActionResult> RequisitionForm(Guid workflowId)
     {
         var message = new RequisitionFormSubmitted(workflowId);
+
+        _logger.LogInformation($"{workflowId} - Publishing RequisitionFormSubmitted event");
 
         await _messageSession.Publish(message)
             .ConfigureAwait(false);
@@ -48,6 +52,8 @@ public class WorkflowController : ControllerBase
             ? new GovernanceApproval(workflowId)
             : new GovernanceDenial(workflowId);
 
+        _logger.LogInformation($"{workflowId} - Publishing {message.GetType().Name} event");
+
         await _messageSession.Publish(message)
             .ConfigureAwait(false);
 
@@ -58,6 +64,8 @@ public class WorkflowController : ControllerBase
     public async Task<IActionResult> Hardware(Guid workflowId)
     {
         var message = new HardwareAllocated(workflowId);
+
+        _logger.LogInformation($"{workflowId} - Publishing HardwareAllocated event");
 
         await _messageSession.Publish(message)
             .ConfigureAwait(false);
@@ -70,6 +78,8 @@ public class WorkflowController : ControllerBase
     {
         var message = new NetworkingConfigured(workflowId);
 
+        _logger.LogInformation($"{workflowId} - Publishing NetworkingConfigured event");
+
         await _messageSession.Publish(message)
             .ConfigureAwait(false);
 
@@ -80,6 +90,8 @@ public class WorkflowController : ControllerBase
     public async Task<IActionResult> DataCenter(Guid workflowId)
     {
         var message = new DataCenterProcessed(workflowId);
+
+        _logger.LogInformation($"{workflowId} - Publishing DataCenterProcessed event");
 
         await _messageSession.Publish(message)
             .ConfigureAwait(false);
