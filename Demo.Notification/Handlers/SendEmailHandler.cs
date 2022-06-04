@@ -11,7 +11,7 @@ public class SendEmailHandler : IHandleMessages<SendEmail>
 
     public Task Handle(SendEmail message, IMessageHandlerContext context) 
     {
-        log.InfoFormat($"{message.WorkflowId} - Sending {message.Type} email to {message.To}");
+        log.Info($"{message.WorkflowId} - Sending {message.Type} email to {message.To}");
         var email = new MailMessage(message.From, message.To, message.Subject, null);
         return new SmtpClient().SendMailAsync(email);
     }

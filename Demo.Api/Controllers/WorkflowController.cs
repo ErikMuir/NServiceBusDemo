@@ -32,6 +32,14 @@ public class WorkflowController : ControllerBase
         return Ok(new { workflowId });
     }
 
+    [HttpGet("{workflowId}")]
+    public IActionResult GetWorkflowStatus(Guid workflowId)
+    {
+         var status = SagaPersistenceHelper.GetSagaData(workflowId);
+        return Ok(new { status });
+    }
+
+
     [HttpPost("{workflowId}/requisition")]
     public async Task<IActionResult> RequisitionForm(Guid workflowId)
     {

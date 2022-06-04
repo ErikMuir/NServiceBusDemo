@@ -16,7 +16,8 @@ var host = Host
             assembly: typeof(SendEmail).Assembly,
             destination: "Demo.Notification");
 
-        endpointConfiguration.UsePersistence<LearningPersistence>();
+        var persistence = endpointConfiguration.UsePersistence<LearningPersistence>();
+
         endpointConfiguration.SendFailedMessagesTo("error");
         endpointConfiguration.AuditProcessedMessagesTo("audit");
 

@@ -6,8 +6,7 @@ using Demo.Notification.Messages;
 
 namespace Demo.Workflow.Sagas;
 
-public class WorkflowSaga :
-    Saga<WorkflowSagaData>,
+public class WorkflowSaga : Saga<WorkflowSagaData>,
     IAmStartedByMessages<BeginWorkflow>,
     IHandleMessages<RequisitionFormSubmitted>,
     IHandleMessages<GovernanceApproval>,
@@ -40,6 +39,7 @@ public class WorkflowSaga :
         _log.Info($"{message.WorkflowId} - Starting Workflow Saga");
 
         // Data.WorkflowId = message.WorkflowId; // this happens auto-magically by the Saga framework
+        Data.Status = WorkflowStatus.Created;
         Data.UserEmail = message.UserEmail;
         Data.CreatedUtc = DateTime.UtcNow;
 
@@ -57,6 +57,7 @@ public class WorkflowSaga :
 
         _log.Info($"{Data.WorkflowId} - Requisition form submitted");
 
+        Data.Status = WorkflowStatus.Submitted;
         Data.IsRequisitionFormSubmitted = true;
         Data.HasGovernanceApproval = null;
 
@@ -75,6 +76,7 @@ public class WorkflowSaga :
 
         _log.Info($"{Data.WorkflowId} - Governance has denied the request");
 
+        Data.Status = WorkflowStatus.Denied;
         Data.HasGovernanceApproval = false;
         Data.IsRequisitionFormSubmitted = false;
 
@@ -93,6 +95,7 @@ public class WorkflowSaga :
 
         _log.Info($"{Data.WorkflowId} - Governance has approved the request");
 
+        Data.Status = WorkflowStatus.ApprovedAndBeingDesigned;
         Data.HasGovernanceApproval = true;
 
         var hardwareEmail = GetEmailCommand(NotificationType.BeginHardware);
@@ -169,6 +172,7 @@ public class WorkflowSaga :
 
         _log.Info($"{Data.WorkflowId} - Data Center processed");
 
+        Data.Status = WorkflowStatus.Complete;
         Data.IsDataCenterProcessed = true;
         Data.CompletedUtc = DateTime.UtcNow;
 
@@ -210,6 +214,8 @@ public class WorkflowSaga :
         {
             return Task.CompletedTask;
         }
+
+        Data.Status = WorkflowStatus.DesignedAndBeingImplemented;
 
         // begin data center processing
         var email = GetEmailCommand(NotificationType.BeginDataCenter);
