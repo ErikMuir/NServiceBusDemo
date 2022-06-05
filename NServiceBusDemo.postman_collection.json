@@ -147,6 +147,24 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Get Status",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUri}}/workflow/{{workflowId}}",
+					"host": [
+						"{{baseUri}}"
+					],
+					"path": [
+						"workflow",
+						"{{workflowId}}"
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"event": [
@@ -177,7 +195,7 @@
 		},
 		{
 			"key": "workflowId",
-			"value": "placeholder",
+			"value": "",
 			"type": "string"
 		}
 	]

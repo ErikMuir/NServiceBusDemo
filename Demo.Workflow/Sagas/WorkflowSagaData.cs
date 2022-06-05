@@ -7,12 +7,13 @@ public class WorkflowSagaData : ContainSagaData
     public Guid WorkflowId { get; set; }
     public WorkflowStatus Status { get; set; }
     public string UserEmail { get; set; } = default!;
-    public DateTime CreatedUtc { get; set; }
-    public DateTime CompletedUtc { get; set; }
 
-    public bool IsRequisitionFormSubmitted { get; set; }
-    public bool? HasGovernanceApproval { get; set; }
-    public bool IsHardwareAllocated { get; set; }
-    public bool IsNetworkConfigured { get; set; }
-    public bool IsDataCenterProcessed { get; set; }
+    public DateTime? CreatedUtc { get; set; }
+    public DateTime? FormSubmittedUtc { get; set; }
+    public DateTime? GovernanceDeniedUtc { get; set; }
+    public DateTime? GovernanceApprovedUtc { get; set; }
+    public DateTime? HardwareAllocatedUtc { get; set; }
+    public DateTime? NetworkingConfiguredUtc { get; set; }
+    public DateTime? DataCenterProcessedUtc { get; set; }
+    public DateTime? CompletedUtc { get; set; }
 }

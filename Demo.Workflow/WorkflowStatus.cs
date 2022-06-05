@@ -9,8 +9,8 @@ namespace Demo.Workflow
         Created,
         Submitted,
         Denied,
-        ApprovedAndBeingDesigned,
-        DesignedAndBeingImplemented,
+        Approved,
+        Designed,
         Complete,
     }
 
@@ -22,8 +22,8 @@ namespace Demo.Workflow
             WorkflowStatus.Created => "Workflow created. Waiting for requisition form submission.",
             WorkflowStatus.Submitted => "Requisition form submitted. Waiting for governance review.",
             WorkflowStatus.Denied => "Request denied. Optionally make changes to requisition form and resubmit.",
-            WorkflowStatus.ApprovedAndBeingDesigned => "Request approved. Currently in design phase.",
-            WorkflowStatus.DesignedAndBeingImplemented => "Design phase complete. Currently being implemented.",
+            WorkflowStatus.Approved => "Request approved. Currently in design phase.",
+            WorkflowStatus.Designed => "Design phase complete. Currently being implemented.",
             WorkflowStatus.Complete => "Implementation complete. Request fulfilled.",
             _ => throw new NotSupportedException(),
         };
