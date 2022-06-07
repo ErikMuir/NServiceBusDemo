@@ -16,9 +16,9 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
-      "program": "${workspaceFolder}/Demo.Api/bin/Debug/net6.0/Demo.Api.dll",
+      "program": "${workspaceFolder}/Api/bin/Debug/net6.0/Api.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/Demo.Api",
+      "cwd": "${workspaceFolder}/Api",
       "console": "externalTerminal",
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development"
@@ -29,9 +29,9 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
-      "program": "${workspaceFolder}/Demo.Workflow/bin/Debug/net6.0/Demo.Workflow.dll",
+      "program": "${workspaceFolder}/Workflow/bin/Debug/net6.0/Workflow.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/Demo.Workflow",
+      "cwd": "${workspaceFolder}/Workflow",
       "console": "externalTerminal"
     },
     {
@@ -39,9 +39,9 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
-      "program": "${workspaceFolder}/Demo.Notification/bin/Debug/net6.0/Demo.Notification.dll",
+      "program": "${workspaceFolder}/Notification/bin/Debug/net6.0/Notification.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/Demo.Notification",
+      "cwd": "${workspaceFolder}/Notification",
       "console": "externalTerminal"
     }
   ]

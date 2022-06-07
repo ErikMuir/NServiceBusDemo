@@ -21,7 +21,7 @@
         "watch",
         "run",
         "--project",
-        "${workspaceFolder}/Demo.Api/Demo.Api.csproj"
+        "${workspaceFolder}/Api/Api.csproj"
       ],
       "problemMatcher": "$msCompile"
     }
