@@ -1,8 +1,8 @@
 using NServiceBus;
-using NServiceBus.Logging;
 using Workflow.Messages;
 using Notification;
 using Notification.Messages;
+using MuirDev.ConsoleTools;
 
 namespace Workflow.Sagas;
 
@@ -14,10 +14,10 @@ public class WorkflowSaga : Saga<WorkflowSagaData>,
     IHandleMessages<HardwareAllocated>,
     IHandleMessages<NetworkingConfigured>,
     IHandleMessages<DataCenterProcessed>,
-    IHandleTimeouts<DataCenterSLAWarning>,
-    IHandleTimeouts<DataCenterSLAExpired>
+    IHandleTimeouts<SLAWarning>,
+    IHandleTimeouts<SLAExpired>
 {
-    static readonly ILog _log = LogManager.GetLogger<WorkflowSaga>();
+    static readonly FluentConsole _log = new();
 
     protected override void ConfigureHowToFindSaga(SagaPropertyMapper<WorkflowSagaData> mapper)
     {
@@ -29,8 +29,8 @@ public class WorkflowSaga : Saga<WorkflowSagaData>,
             .ToMessage<HardwareAllocated>(msg => msg.WorkflowId)
             .ToMessage<NetworkingConfigured>(msg => msg.WorkflowId)
             .ToMessage<DataCenterProcessed>(msg => msg.WorkflowId)
-            .ToMessage<DataCenterSLAWarning>(msg => msg.WorkflowId)
-            .ToMessage<DataCenterSLAExpired>(msg => msg.WorkflowId);
+            .ToMessage<SLAWarning>(msg => msg.WorkflowId)
+            .ToMessage<SLAExpired>(msg => msg.WorkflowId);
     }
 
     #region Handlers
@@ -155,7 +155,7 @@ public class WorkflowSaga : Saga<WorkflowSagaData>,
 
         if (!IsDesignPhaseComplete())
         {
-            _log.Warn("Waiting on other design teams");
+            _log.Warning("Waiting on other design teams");
             return Task.CompletedTask;
         }
 
@@ -171,26 +171,26 @@ public class WorkflowSaga : Saga<WorkflowSagaData>,
     #endregion
 
     #region Timeouts
-    public Task Timeout(DataCenterSLAWarning timeout, IMessageHandlerContext context)
+    public Task Timeout(SLAWarning timeout, IMessageHandlerContext context)
     {
         if (Data.DataCenterProcessedUtc is not null)
         {
             return Task.CompletedTask;
         }
 
-        _log.Warn("WARNING! Data Center SLA about to expire");
+        _log.Warning($"WARNING! {timeout.Team} SLA about to expire");
         var email = GetEmailCommand(NotificationType.DataCenterSLAWarning);
         return context.Send(email);
     }
 
-    public Task Timeout(DataCenterSLAExpired timeout, IMessageHandlerContext context)
+    public Task Timeout(SLAExpired timeout, IMessageHandlerContext context)
     {
         if (Data.DataCenterProcessedUtc is not null)
         {
             return Task.CompletedTask;
         }
 
-        _log.Warn("ALERT! Data Center SLA has expired");
+        _log.Warning($"ALERT! {timeout.Team} SLA has expired");
         var email = GetEmailCommand(NotificationType.DataCenterSLAExpired);
         return context.Send(email);
     }
@@ -206,37 +206,35 @@ public class WorkflowSaga : Saga<WorkflowSagaData>,
 
         Data.Status = WorkflowStatus.Designed;
 
-        // begin data center processing
         var email = GetEmailCommand(NotificationType.BeginDataCenter);
-        var beginDataCenterProcessingTask = context.Send(email);
-
-        // data center SLA prep
-        var startUtc = DateTime.UtcNow;
-        var dataCenterSLA = TimeSpan.FromMinutes(1); // would probably come from config
         var timeout = new SLATimeout
         {
             WorkflowId = Data.WorkflowId,
-            SLAWindow = dataCenterSLA,
-            StartUtc = startUtc,
+            Team = "Data Center",
+            SLAWindow = TimeSpan.FromMinutes(1), // would probably come from config
+            StartUtc = DateTime.UtcNow,
         };
 
-        // create SLA warning timeout
-        var slaWarning = new DataCenterSLAWarning(timeout);
-        var warnAt = startUtc.Add(dataCenterSLA * 0.8);
-        var slaWarningTask = RequestTimeout<DataCenterSLAWarning>(context, warnAt, slaWarning);
-
-        // create SLA expired timeout
-        var slaExpired = new DataCenterSLAExpired(timeout);
-        var expireAt = startUtc.Add(dataCenterSLA);
-        var slaExpiredTask = RequestTimeout<DataCenterSLAExpired>(context, expireAt, slaExpired);
-
-        // await all tasks
         return Task.WhenAll(new Task[]
         {
-            beginDataCenterProcessingTask,
-            slaWarningTask,
-            slaExpiredTask,
+            context.Send(email),
+            CreateSLAWarning(context, timeout),
+            CreateSLAExpired(context, timeout),
         });
+    }
+
+    private Task CreateSLAWarning(IMessageHandlerContext context, SLATimeout timeout)
+    {
+        var slaWarning = new SLAWarning(timeout);
+        var triggerAt = timeout.StartUtc.Add(timeout.SLAWindow * 0.8);
+        return RequestTimeout<SLAWarning>(context, triggerAt, slaWarning);
+    }
+
+    private Task CreateSLAExpired(IMessageHandlerContext context, SLATimeout timeout)
+    {
+        var slaExpired = new SLAExpired(timeout);
+        var triggerAt = timeout.StartUtc.Add(timeout.SLAWindow);
+        return RequestTimeout<SLAExpired>(context, triggerAt, slaExpired);
     }
 
     private SendEmail GetEmailCommand(NotificationType type)
@@ -269,7 +267,7 @@ public class WorkflowSaga : Saga<WorkflowSagaData>,
 
     private Task CannotProcess(IMessage message)
     {
-        _log.Warn($"Cannot process {message.GetType().Name} events while in {Data.Status} status!");
+        _log.Warning($"Cannot process {message.GetType().Name} events while in {Data.Status} status!");
         return Task.CompletedTask;
     }
     #endregion

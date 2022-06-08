@@ -3,6 +3,7 @@ using Workflow;
 using Workflow.Messages;
 using Microsoft.AspNetCore.Mvc;
 using NServiceBus;
+using MuirDev.ConsoleTools;
 
 namespace Api.Controllers;
 
@@ -11,12 +12,11 @@ namespace Api.Controllers;
 public class WorkflowController : ControllerBase
 {
     private readonly IMessageSession _messageSession;
-    private readonly ILogger<WorkflowController> _logger;
+    static readonly FluentConsole _log = new();
 
-    public WorkflowController(IMessageSession messageSession, ILogger<WorkflowController> logger)
+    public WorkflowController(IMessageSession messageSession)
     {
         _messageSession = messageSession;
-        _logger = logger;
     }
 
     [HttpPost]
@@ -25,7 +25,7 @@ public class WorkflowController : ControllerBase
         var workflowId = Guid.NewGuid();
         var message = new BeginWorkflow(workflowId, requestBody.UserEmail);
 
-        _logger.LogInformation("Sending BeginWorkflow command to Workflow service");
+        _log.Info("Sending BeginWorkflow command to Workflow service");
 
         await _messageSession.Send(message)
             .ConfigureAwait(false);
@@ -40,7 +40,7 @@ public class WorkflowController : ControllerBase
         var status = sagaData?.Status ?? WorkflowStatus.Unknown;
         var description = status.GetDescription();
 
-        _logger.LogInformation($"Status: {status}. {description}");
+        _log.Info($"Status: {status}. {description}");
 
         return Ok(new { status, description });
     }
@@ -51,7 +51,7 @@ public class WorkflowController : ControllerBase
     {
         var message = new RequisitionFormSubmitted(workflowId);
 
-        _logger.LogInformation("Publishing RequisitionFormSubmitted event");
+        _log.Info("Publishing RequisitionFormSubmitted event");
 
         await _messageSession.Publish(message)
             .ConfigureAwait(false);
@@ -66,7 +66,7 @@ public class WorkflowController : ControllerBase
             ? new GovernanceApproval(workflowId)
             : new GovernanceDenial(workflowId);
 
-        _logger.LogInformation($"Publishing {message.GetType().Name} event");
+        _log.Info($"Publishing {message.GetType().Name} event");
 
         await _messageSession.Publish(message)
             .ConfigureAwait(false);
@@ -79,7 +79,7 @@ public class WorkflowController : ControllerBase
     {
         var message = new HardwareAllocated(workflowId);
 
-        _logger.LogInformation("Publishing HardwareAllocated event");
+        _log.Info("Publishing HardwareAllocated event");
 
         await _messageSession.Publish(message)
             .ConfigureAwait(false);
@@ -92,7 +92,7 @@ public class WorkflowController : ControllerBase
     {
         var message = new NetworkingConfigured(workflowId);
 
-        _logger.LogInformation("Publishing NetworkingConfigured event");
+        _log.Info("Publishing NetworkingConfigured event");
 
         await _messageSession.Publish(message)
             .ConfigureAwait(false);
@@ -105,7 +105,7 @@ public class WorkflowController : ControllerBase
     {
         var message = new DataCenterProcessed(workflowId);
 
-        _logger.LogInformation("Publishing DataCenterProcessed event");
+        _log.Info("Publishing DataCenterProcessed event");
 
         await _messageSession.Publish(message)
             .ConfigureAwait(false);

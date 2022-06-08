@@ -1,13 +1,13 @@
 using NServiceBus;
-using NServiceBus.Logging;
 using Notification.Messages;
 using System.Net.Mail;
+using MuirDev.ConsoleTools;
 
 namespace Notification.Handlers;
 
 public class SendEmailHandler : IHandleMessages<SendEmail>
 {
-    static readonly ILog log = LogManager.GetLogger<SendEmailHandler>();
+    static readonly FluentConsole log = new();
 
     public Task Handle(SendEmail message, IMessageHandlerContext context)
     {
