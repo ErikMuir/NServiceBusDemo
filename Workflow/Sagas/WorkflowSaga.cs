@@ -36,7 +36,7 @@ public class WorkflowSaga : Saga<WorkflowSagaData>,
     #region Handlers
     public Task Handle(BeginWorkflow message, IMessageHandlerContext context)
     {
-        _log.Info($"{message.WorkflowId} - Starting Workflow Saga");
+        _log.Info("Starting Workflow Saga");
 
         // Data.WorkflowId = message.WorkflowId; // this happens auto-magically by the Saga framework
         Data.Status = WorkflowStatus.Created;
@@ -56,11 +56,10 @@ public class WorkflowSaga : Saga<WorkflowSagaData>,
         };
         if (!validStates.Contains(Data.Status))
         {
-            _log.Warn($"{Data.WorkflowId} - Cannot process {message.GetType().Name} events while in {Data.Status} status!");
-            return Task.CompletedTask;
+            return CannotProcess(message);
         }
 
-        _log.Info($"{Data.WorkflowId} - Requisition form submitted");
+        _log.Info("Requisition form submitted");
 
         Data.Status = WorkflowStatus.Submitted;
 
@@ -72,11 +71,10 @@ public class WorkflowSaga : Saga<WorkflowSagaData>,
     {
         if (Data.Status != WorkflowStatus.Submitted)
         {
-            _log.Warn($"{Data.WorkflowId} - Cannot process {message.GetType().Name} events while in {Data.Status} status!");
-            return Task.CompletedTask;
+            return CannotProcess(message);
         }
 
-        _log.Info($"{Data.WorkflowId} - Governance has denied the request");
+        _log.Info("Governance has denied the request");
 
         Data.Status = WorkflowStatus.Denied;
 
@@ -88,11 +86,10 @@ public class WorkflowSaga : Saga<WorkflowSagaData>,
     {
         if (Data.Status != WorkflowStatus.Submitted)
         {
-            _log.Warn($"{Data.WorkflowId} - Cannot process {message.GetType().Name} events while in {Data.Status} status!");
-            return Task.CompletedTask;
+            return CannotProcess(message);
         }
 
-        _log.Info($"{Data.WorkflowId} - Governance has approved the request");
+        _log.Info("Governance has approved the request");
 
         Data.Status = WorkflowStatus.Approved;
 
@@ -113,14 +110,17 @@ public class WorkflowSaga : Saga<WorkflowSagaData>,
     {
         if (Data.Status != WorkflowStatus.Approved)
         {
-            _log.Warn($"{Data.WorkflowId} - Cannot process {message.GetType().Name} events while in {Data.Status} status!");
-            return Task.CompletedTask;
+            return CannotProcess(message);
         }
 
         if (Data.HardwareAllocatedUtc is null)
         {
-            _log.Info($"{Data.WorkflowId} - Hardware allocated");
+            _log.Info("Hardware allocated");
             Data.HardwareAllocatedUtc = DateTime.UtcNow;
+        }
+        else
+        {
+            _log.Info("Hardware already allocated");
         }
 
         return ProcessHardwareAndNetworking(context);
@@ -130,14 +130,17 @@ public class WorkflowSaga : Saga<WorkflowSagaData>,
     {
         if (Data.Status != WorkflowStatus.Approved)
         {
-            _log.Warn($"{Data.WorkflowId} - Cannot process {message.GetType().Name} events while in {Data.Status} status!");
-            return Task.CompletedTask;
+            return CannotProcess(message);
         }
 
         if (Data.NetworkingConfiguredUtc is null)
         {
-            _log.Info($"{Data.WorkflowId} - Network configured");
+            _log.Info("Network configured");
             Data.NetworkingConfiguredUtc = DateTime.UtcNow;
+        }
+        else
+        {
+            _log.Info("Network already configured");
         }
 
         return ProcessHardwareAndNetworking(context);
@@ -147,17 +150,16 @@ public class WorkflowSaga : Saga<WorkflowSagaData>,
     {
         if (Data.Status != WorkflowStatus.Designed)
         {
-            _log.Warn($"{Data.WorkflowId} - Cannot process {message.GetType().Name} events while in {Data.Status} status!");
-            return Task.CompletedTask;
+            return CannotProcess(message);
         }
 
         if (!IsDesignPhaseComplete())
         {
-            _log.Warn($"{Data.WorkflowId} - Waiting on other design teams");
+            _log.Warn("Waiting on other design teams");
             return Task.CompletedTask;
         }
 
-        _log.Info($"{Data.WorkflowId} - Data Center processed");
+        _log.Info("Data Center processed");
 
         Data.Status = WorkflowStatus.Complete;
         Data.DataCenterProcessedUtc = DateTime.UtcNow;
@@ -176,7 +178,7 @@ public class WorkflowSaga : Saga<WorkflowSagaData>,
             return Task.CompletedTask;
         }
 
-        _log.Warn($"{Data.WorkflowId} - WARNING! Data Center SLA about to expire");
+        _log.Warn("WARNING! Data Center SLA about to expire");
         var email = GetEmailCommand(NotificationType.DataCenterSLAWarning);
         return context.Send(email);
     }
@@ -188,7 +190,7 @@ public class WorkflowSaga : Saga<WorkflowSagaData>,
             return Task.CompletedTask;
         }
 
-        _log.Warn($"{Data.WorkflowId} - ALERT! Data Center SLA has expired");
+        _log.Warn("ALERT! Data Center SLA has expired");
         var email = GetEmailCommand(NotificationType.DataCenterSLAExpired);
         return context.Send(email);
     }
@@ -264,5 +266,11 @@ public class WorkflowSaga : Saga<WorkflowSagaData>,
 
     private bool IsDesignPhaseComplete()
         => Data.HardwareAllocatedUtc.HasValue && Data.NetworkingConfiguredUtc.HasValue;
+
+    private Task CannotProcess(IMessage message)
+    {
+        _log.Warn($"Cannot process {message.GetType().Name} events while in {Data.Status} status!");
+        return Task.CompletedTask;
+    }
     #endregion
 }
